@@ -37,66 +37,101 @@
 <!-- Any section element inside of this container is displayed as a slide -->
 <div class="slides">
 <section>
-    <h1>Reveal.js</h1>
+    <h1>XHprof + xhgui</h1>
 
-    <h3>HTML Presentations Made Easy</h3>
+    <h2>Profiling PHP applications</h2>
 
     <p>
-        <small>Created by <a href="http://hakim.se">Hakim El Hattab</a> / <a
-                href="http://twitter.com/hakimel">@hakimel</a></small>
+        <small>Created by <a href="http://www.linkedin.com/profile/view?id=118250823">Oleg Roshnivskyi</a> / <a
+            href="https://office.kologlobal.local/profile/Rosh">Rosh</a></small>
+    </p>
+
+    <p>
+        <small>
+            Themes: <a href="?#/themes">Default</a> -
+            <a href="?theme=sky">Sky</a> -
+            <a href="?theme=beige">Beige</a> -
+            <a href="?theme=simple">Simple</a> -
+            <a href="?theme=serif">Serif</a> -
+            <a href="?theme=night">Night</a> <br>
+            <a href="?theme=moon.css">Moon</a> -
+            <a href="?theme=simple.css">Simple</a> -
+            <a href="?theme=solarized.css">Solarized</a>
+        </small>
     </p>
 </section>
-
 <section>
-    <h2>Heads Up</h2>
+    <h2>About me</h2>
 
-    <p>
-        reveal.js is a framework for easily creating beautiful presentations using HTML. You'll need a browser with
-        support for CSS 3D transforms to see it in its full glory.
-    </p>
+    <img src="images/on_map.png" style="height: 370px">
 
-    <aside class="notes">
-        Oh hey, these are some notes. They'll be hidden in your presentation, but you can see them if you open the
-        speaker notes window (hit 's' on your keyboard).
-    </aside>
+    <h3>PHP Developer</h3>
+
+    <h3>Internal systems team</h3>
 </section>
 
-<!-- Example of nested vertical slides -->
 <section>
     <section>
-        <h2>Vertical Slides</h2>
+        <h2>What is</h2>
+
+        <h3>Xhprof</h3>
 
         <p>
-            Slides can be nested inside of other slides,
-            try pressing <a href="#" class="navigate-down">down</a>.
+            XHProf is a function-level hierarchical profiler for PHP and has a simple HTML based user interface. The raw
+            data collection component is implemented in C (as a PHP extension).
         </p>
-        <a href="#" class="image navigate-down">
-            <img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png"
-                 alt="Down arrow">
-        </a>
     </section>
     <section>
-        <h2>Basement Level 1</h2>
+        <h3>xhgui</h3>
 
-        <p>Press down or up to navigate.</p>
+        <p>
+            A graphical interface for XHProf data built on MongoDB.
+        </p>
+    </section>
+
+</section>
+
+<section>
+    <section>
+        <h2>Installation</h2>
+
+        <h3>Xhprof</h3>
+
+        <p>
+            <pre><code data-trim contenteditable>~
+                sudo pear upgrade pear
+                sudo pecl install xhprof-0.9.4
+                extension=xhprof.so (php.ini)
+                restart server/fpm
+                sudo apt-get install graphviz (optional)
+            </code></pre>
+        </p>
     </section>
     <section>
-        <h2>Basement Level 2</h2>
+        <h2>Xhgui</h2>
 
-        <p>Cornify</p>
-        <a class="test" href="http://cornify.com">
-            <img width="280" height="326" src="https://s3.amazonaws.com/hakim-static/reveal-js/cornify.gif"
-                 alt="Unicorn">
-        </a>
-    </section>
-    <section>
-        <h2>Basement Level 3</h2>
-
-        <p>That's it, time to go back up.</p>
-        <a href="#/2" class="image">
-            <img width="178" height="238" src="https://s3.amazonaws.com/hakim-static/reveal-js/arrow.png" alt="Up arrow"
-                 style="-webkit-transform: rotate(180deg);">
-        </a>
+        <p>
+            Requirements
+        <ul>
+            <li>
+                <a href="http://pecl.php.net/package/xhprof">XHProf</a> to actually profile the data
+            </li>
+            <li>
+                <a href="http://pecl.php.net/package/mongo">MongoDB PHP</a> MongoDB PHP extension
+            </li>
+            <li>
+                <a href="http://www.mongodb.org/">MongoDB</a> MongoDB Itself
+            </li>
+            <li>
+                <a href="http://php.net/manual/en/book.mcrypt.php">mcrypt</a> PHP must be configured
+                with mcrypt (which is a dependency of Slim)
+            </li>
+            <li>
+                <a href="http://php.net/manual/en/book.dom.php">dom</a> If you are running the tests
+                you'll need the DOM extension (which is a dependency of PHPUnit)
+            </li>
+        </ul>
+        </p>
     </section>
 </section>
 
@@ -104,22 +139,58 @@
     <h2>Slides</h2>
 
     <p>
-        Not a coder? No problem. There's a fully-featured visual editor for authoring these, try it out at <a
-            href="http://slid.es" target="_blank">http://slid.es</a>.
+    <ul class="">
+        <li><a href="http://php.net/manual/en/function.xhprof-disable.php">xhprof_disable</a> &mdash; Stops xhprof profiler</li>
+        <li><a href="http://php.net/manual/en/function.xhprof-enable.php">xhprof_enable</a> &mdash; Start xhprof profiler</li>
+        <li><a href="http://php.net/manual/en/function.xhprof-sample-disable.php">xhprof_sample_disable</a> &mdash; Stops xhprof sample profiler
+        </li>
+        <li><a href="http://php.net/manual/en/function.xhprof-sample-enable.php">xhprof_sample_enable</a> &mdash; Start XHProf profiling in
+            sampling mode
+        </li>
+    </ul>
     </p>
 </section>
 
 <section>
-    <h2>Point of View</h2>
+    <section>
+        <h2>Xhgui interface</h2>
+        <h3>Recent</h3>
 
-    <p>
-        Press <strong>ESC</strong> to enter the slide overview.
-    </p>
+        <p>
+            <iframe src="http://xhgui.internal/" style="height: 500px;width: 100%;"></iframe>
+        </p>
+    </section>
+    <section>
+        <h3>Watch functions</h3>
 
-    <p>
-        Hold down alt and click on any element to zoom in on it using <a href="http://lab.hakim.se/zoom-js">zoom.js</a>.
-        Alt + click anywhere to zoom back out.
-    </p>
+        <p>
+            Watch functions allow you to set function name/patterns that you want to see at the top of each run result page.
+
+            Watches can either be exact matches or use PCRE patterns to match multiple function names.
+        </p>
+    </section>
+    <section>
+        <h3>Waterfall</h3>
+
+        <p>
+            <iframe src="http://xhgui.internal/waterfall" style="height: 500px;width: 100%;"></iframe>
+        </p>
+    </section>
+    <section>
+        <h3>Runs for url</h3>
+
+        <p>
+            <iframe src="http://xhgui.internal/url/view?url=kbill.internal%2F" style="height: 500px;width: 100%;"></iframe>
+        </p>
+    </section>
+    <section>
+        <h3>Runs for url</h3>
+
+        <p>
+            <iframe src="http://xhgui.internal/run/view?id=5260ded145b9f9b77c000002" style="height: 500px;width: 100%;"></iframe>
+        </p>
+    </section>
+    
 </section>
 
 <section>
@@ -277,7 +348,7 @@
 
     <p>
         These guys come in two forms, inline: <q
-            cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
+        cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
         &ldquo;The nice thing about standards is that there are so many to choose from&rdquo;</q> and block:
     </p>
     <blockquote cite="http://searchservervirtualization.techtarget.com/definition/Our-Favorite-Technology-Quotations">
