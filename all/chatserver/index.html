@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>reveal.js - The HTML Presentation Framework</title>
+
+    <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+    <meta name="author" content="Hakim El Hattab">
+
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../css/reveal.min.css">
+    <link rel="stylesheet" href="../../css/theme/default.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="../../lib/css/zenburn.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+        document.write('<link rel="stylesheet" href="../../css/print/' + ( window.location.search.match(/print-pdf/gi) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">');
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="../../lib/js/html5shiv.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+<div class="reveal">
+
+    <!-- Any section element inside of this container is displayed as a slide -->
+    <div class="slides">
+        <section>
+            <h1>CRM chatserver</h1>
+
+        </section>
+        <section>
+            <section>
+                <h2>API:</h2>
+
+                <h3>Room state:</h3>
+
+                <p>
+                <ul>
+                    <li>/getroom/{room}/({limit:[1-9][0-9]*}-{offset:[1-9][0-9]*})?</li>
+                    <li>/rooms/get</li>
+                    <li>/rooms/reopen/{room}</li>
+                    <li>/rooms/close/{room}</li>
+                    <li>/rooms/leave/{room}</li>
+                    <li>/rooms/enable_automessages/{room}</li>
+                    <li>/rooms/disable_automessages/{room}</li>
+                    <li>/rooms/reload_automessages</li>
+                    <li>/rooms/customer/set-display-name/{room}/{new-customer-name}</li>
+                    <li>/rooms/customer/set-has-order/{room}/{has-order}</li>
+                    <li>/rooms/customer/set-id/{room}/{customer-id}</li>
+                    <li>/rooms/customer/set-rating/{room}/{rating}</li>
+                    <li>/rooms/set-queue-index/{room}/{index}</li>
+                    <li>/users/online</li>
+                </ul>
+                </p>
+            </section>
+            <section>
+                <h3>Messaging api: </h3>
+                <ul>
+                    <li>/post/{room}/</li>
+                    <li>/listen/{rooms}/</li>
+                    <li>gorillaMux.Handle("/wschat", websocket.Handler(WSChatHandler))</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Websockets API:</h3>
+                gorillaMux.Handle("/wschat", websocket.Handler(WSChatHandler))<br>
+                <ul>
+                    <li>Client noification</li>
+                    <li>rooms</li>
+                    <li>room-join (new)</li>
+                    <li>room-leave (new)</li>
+                </ul>
+            </section>
+        </section>
+        <section>
+            <h2>Server start:</h2>
+            <ol>
+                <li>Read configs from file and arguments and merge them</li>
+                <li>preloadOpenRooms() -> creates globalRoomManager</li>
+                <li>NewAutomessageManager()</li>
+            </ol>
+        </section>
+        <section>
+            <section>
+                <h2>RoomManager</h2>
+            <pre>
+                <code>
+type RoomManager struct {
+    rooms                         map[string]map[string]*RoomMember
+    roomInfo                      map[string]*RoomInfo
+    roomsWithAutomessagesDisabled map[string]bool  //rooms with disabled automessages
+    lastMessageIds                map[string]int64 //reply_to - not works
+    deferredMessages              map[time.Time]Message //not used
+    WebSocketsPool                map[*websocket.Conn]bool //not used
+    OpenedRooms                   map[string]bool //room id's that currently opened
+}
+                </code>
+            </pre>
+            </section>
+            <section>
+                <h3>RoomMember</h3>
+                <pre>
+                    <code>
+type RoomMember struct {
+    Id                    string            `json:"id"`
+    Type                  int               `json:"type"`
+    Status                int               `json:"status"`
+    DisconnectedTimestamp time.Time         `json:"-"` //time when member was disconnected
+    longPollStreams       []chan Message    `json:"-"`//long polling streams
+    webSockStreams        []*websocket.Conn `json:"-"` //websockets streams
+
+    messageQueue     []Message   `json:"-"` // message queue
+    messageQueueLock *sync.Mutex `json:"-"` // not used
+}
+                    </code>
+                </pre>
+            </section>
+            <section>
+                <h3>RoomInfo</h3>
+                <pre>
+                    <code>
+type RoomInfo struct {
+    Id                  string           `json:"-"`
+    Product             string           `json:"product"`
+    Source              string           `json:"source"`
+    RoomCreatedDate     string           `json:"room_created_date"`
+    CustomerId          int              `json:"customer_id"`
+    CustomerDisplayName string           `json:"customer_display_name"`
+    CustomerMessages    int64            `json:"customer_messages"`
+    CustomerRating      float32          `json:"customer_rating"`
+    QueueIndex          int              `json:"queue_index"`
+    Language            string           `json:"language"`
+    HasOrder            bool             `json:"has_order"`
+    AgentMessages       map[string]int64 `json:"agent_messages"`
+    AutomessagesEnabled bool             `json:"enable_automessages"`
+}
+                    </code>
+                </pre>
+            </section>
+            <section>
+                <h3>Session manager</h3>
+                <pre>
+                    <code>
+type AuthSessions struct {
+    sessions       map[int]*Session
+    cachedSessions map[int]int
+}
+    
+type Session struct {
+    Uid      int    `json:"uid"`
+    Name     string `json:"name"`
+    Nickname string `json:"nickname"`
+}
+                    </code>
+                </pre>
+            </section>
+            <section>
+                <h3>Long polling listener</h3>
+                <pre>
+                    <code>
+package main
+
+import (
+	"chatapp/logger"
+	"encoding/json"
+	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/nu7hatch/gouuid"
+	"net/http"
+	_ "strconv"
+	"strings"
+	"time"
+)
+
+func HandlerRoomsListen(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		callback := r.FormValue("callback")
+
+		agentCookie, _ := r.Cookie("auth_id")
+		clientCookie, clientErr := r.Cookie("client-id")
+
+		vars := mux.Vars(r)
+		roomsList := strings.Split(vars["rooms"], "-")
+
+		logger.Log(logger.VERBOSITY_QUIET, "[HRL] Started listening, got rooms list: ", roomsList)
+
+		if agentCookie != nil {
+			flushForbidden(w, "Long-polling is no longer supported for support agents")
+			return
+		} else {
+			logger.Log(logger.VERBOSITY_DEBUG, "[HRL] Customer check")
+			if len(roomsList) != 1 {
+				flushForbidden(w, "Client cannot listen more than 1 room at a time")
+				return
+			}
+			if clientErr != nil {
+				clientId := r.FormValue("client-id")
+				if clientId == "" {
+					logger.Log(logger.VERBOSITY_QUIET, "[HRL] Listening with NEW customer, roomId: ", roomsList[0])
+					uid, err := uuid.NewV4()
+					if err != nil {
+						flushInternalError(w, err.Error())
+						return
+					}
+					clientId := uid.String()
+					clientCookie := http.Cookie{
+						Name:    "client-id",
+						Value:   clientId,
+						Expires: time.Now().Add(time.Duration(time.Second * time.Duration(config.ClientExpire))),
+					}
+					http.SetCookie(w, &clientCookie)
+					out(w, callback, []byte(`[]`))
+					return
+				} else {
+					logger.Log(logger.VERBOSITY_QUIET, "[HRL] Listening with existing customer, roomId: ", roomsList[0])
+					handlerRoomsListenCustomer(w, r, roomsList[0], clientId, callback)
+				}
+			} else {
+				logger.Log(logger.VERBOSITY_QUIET, "[HRL] Listening with existing customer, roomId: ", roomsList[0])
+				handlerRoomsListenCustomer(w, r, roomsList[0], clientCookie.Value, callback)
+			}
+		}
+	}
+}
+
+func handlerRoomsListenCustomer(w http.ResponseWriter, r *http.Request, roomId string, clientId string, callback string) {
+	member := globalRoomManager.GetMemberFromRoom(roomId, clientId)
+
+	if member != nil {
+		member.DisconnectedTimestamp = time.Unix(0, 0)
+		if member.HasQueuedMessages() {
+			logger.Log(logger.VERBOSITY_QUIET, "[HRLC] Sending queued messages without channeling! roomId: ", roomId)
+			messages := member.GetQueuedMessages()
+			for _, m := range messages {
+				m.DateTime = TimeFormatForChat(time.Now())
+			}
+			jsonMessages, _ := json.Marshal(messages)
+			member.FlushMessageQueue()
+			outMany(w, callback, jsonMessages)
+			registerDisconnect(clientId, roomId)
+			return
+		}
+	}
+
+	channel := make(chan Message)
+	logger.Log(logger.VERBOSITY_QUIET, "[HRLC] Customer ", clientId, " listens, going to enter room ", roomId)
+	globalRoomManager.RoomEnter(roomId, clientId, CLIENT_TYPE_CUSTOMER, channel)
+	logger.Log(logger.VERBOSITY_QUIET, "[HRLC] Entered room, listening for broadcasts, roomId ", roomId)
+	logger.Log(logger.VERBOSITY_QUIET, "[HRLC] Member does not have queued messages, roomId ", roomId)
+
+	for {
+		logger.Log(logger.VERBOSITY_QUIET, "[HRLC] CUSTOMER: Blocking on channel: ", channel)
+		select {
+		case message := <-channel:
+			logger.Log(logger.VERBOSITY_QUIET, "[HRLC] CUSTOMER: Message received: ", message.Body, ", roomId: ", roomId)
+			if message.Type == MESSAGE_TYPE_LEAVE_ROOM {
+				globalRoomManager.UnregisterMemberChannel(roomId, clientId, channel)
+				out(w, "", []byte(`[]`))
+				registerDisconnect(clientId, roomId)
+				return
+			} else {
+				globalRoomManager.UnregisterMemberChannel(roomId, clientId, channel)
+				message.DateTime = TimeFormatForChat(time.Now())
+				jsonMessage, _ := message.SerializeJson()
+				out(w, callback, jsonMessage)
+				registerDisconnect(clientId, roomId)
+				return
+			}
+		case <-w.(http.CloseNotifier).CloseNotify():
+			globalRoomManager.UnregisterMemberChannel(roomId, clientId, channel)
+			out(w, "", []byte(`[]`))
+			registerDisconnect(clientId, roomId)
+			return
+		}
+	}
+}
+
+func registerDisconnect(memberId string, roomId string) {
+	member := globalRoomManager.GetMemberFromRoom(roomId, memberId)
+	if member != nil {
+		member.DisconnectedTimestamp = time.Now()
+		member.UpdateAndGetStatus()
+	}
+}
+
+func out(w http.ResponseWriter, callback string, message []byte) {
+	w.Header().Set("Content-Type", "text/javascript; encoding=utf-8")
+	w.WriteHeader(http.StatusOK)
+	if callback != "" {
+		fmt.Fprintf(w, "%s([%s])", callback, message)
+	} else {
+		fmt.Fprintf(w, "[%s]", message)
+	}
+}
+
+func outMany(w http.ResponseWriter, callback string, message []byte) {
+	w.Header().Set("Content-Type", "text/javascript; encoding=utf-8")
+	w.WriteHeader(http.StatusOK)
+	if callback != "" {
+		fmt.Fprintf(w, "%s(%s)", callback, message)
+	} else {
+		fmt.Fprintf(w, "%s", message)
+	}
+}
+
+                    </code>
+                </pre>
+            </section>
+        <section>
+            <h3>Web sockets polling</h3>
+            <pre>
+                <code>
+package main
+
+import (
+	"chatapp/logger"
+	"code.google.com/p/go.net/websocket"
+	"encoding/json"
+	"strconv"
+	"time"
+)
+
+func handleWebsocketListenSupport(ws *websocket.Conn, authId string) {
+	logger.Log(logger.VERBOSITY_VERBOSE, "[HWLS] Handle Listen Support Agent: ", authId)
+
+	intAuthId, err := strconv.ParseInt(authId, 10, 64)
+	userId, agentName, err := AuthGetAgentId(int(intAuthId))
+	if err != nil {
+		logger.Log(logger.VERBOSITY_QUIET, "[HWLS] Error getting Auth Agent ID: ", authId)
+		_, err = ws.Write([]byte(`{"error": 403}`))
+		ws.Close()
+		return
+	}
+	handleWebsocketsReRegister(ws, authId)
+
+	var inBuffer string
+
+	logger.Log(logger.VERBOSITY_VERBOSE, "[HWLS] Entering listening loop: ", authId)
+
+	for {
+		err := websocket.Message.Receive(ws, &inBuffer)
+		if err != nil {
+			logger.Log(logger.VERBOSITY_QUIET, "[HWLS] [WS-ERROR] Disconnect detected ", authId, ": ", err.Error())
+			handleWebsocketsDisconnected(ws, authId)
+			break
+		}
+		logger.Log(logger.VERBOSITY_VERBOSE, "[HWLS]  Successfull read from websocket: ", authId)
+
+		jsonMessageType := &WSMessageType{}
+		err = json.Unmarshal([]byte(inBuffer), jsonMessageType)
+		if err != nil {
+			logger.Log(logger.VERBOSITY_QUIET, "[HWLS] [ERROR] Bad json: ", inBuffer)
+			continue
+		}
+		switch jsonMessageType.Type {
+		case "rooms-join":
+			inMessage := &WSMessageRoom{}
+			err = json.Unmarshal([]byte(inBuffer), inMessage)
+			if err != nil {
+				logger.Log(logger.VERBOSITY_QUIET, "[HWLS] [ERROR]: Wrong room message structure")
+				_, err = ws.Write([]byte(`{"type": "rooms-join", "result": "err", "error": "Wrong message"}`))
+				continue
+			}
+
+			globalRoomManager.RoomEnterWS(inMessage.Room, authId, CLIENT_TYPE_SUPPORT, ws)
+			_, err = ws.Write([]byte(`{"type": "rooms-join", "result": "ok", "room": "` + inMessage.Room + `", "auth_id": "` + authId + `", nickname: "` + agentName + `"}`))
+		case "rooms-leave":
+			inMessage := &WSMessageRoom{}
+			err = json.Unmarshal([]byte(inBuffer), inMessage)
+			if err != nil {
+				logger.Log(logger.VERBOSITY_QUIET, "[HWLS] [ERROR]: Wrong room message structure")
+				_, err = ws.Write([]byte(`{"type": "rooms-leave", "result": "err", "error": "Wrong message"}`))
+				continue
+			}
+
+			globalRoomManager.DisconnectWS(inMessage.Room, authId, ws)
+			member := globalRoomManager.GetMemberFromRoom(inMessage.Room, authId)
+			if member != nil {
+				globalRoomManager.RoomLeave(inMessage.Room, authId)
+				member.DisconnectedTimestamp = time.Now()
+				member.UpdateAndGetStatus()
+			}
+
+			_, err = ws.Write([]byte(`{"type": "rooms-leave", "result": "ok"}`))
+		default:
+			inMessage := &WSMessagePost{}
+			err = json.Unmarshal([]byte(inBuffer), inMessage)
+			if err != nil {
+				continue
+			}
+			globalRoomManager.RoomReopen(inMessage.Room, true)
+			messageType := inMessage.Type
+			if messageType == "" {
+				messageType = MESSAGE_TYPE_OUTGOING
+			}
+			switch messageType {
+			case MESSAGE_TYPE_CUSTOMER_TYPING, MESSAGE_TYPE_CUSTOMER_UNTYPING, MESSAGE_TYPE_AGENT_TYPING, MESSAGE_TYPE_AGENT_UNTYPING, MESSAGE_TYPE_TYPING, MESSAGE_TYPE_JOINED, MESSAGE_TYPE_LEFT:
+				break
+			default:
+				messageType = MESSAGE_TYPE_OUTGOING
+			}
+
+			chatMessage := NewMessage(-1, messageType, userId, inMessage.Body, inMessage.Room, TimeFormatForChat(time.Now()), agentName)
+
+			switch messageType {
+			case MESSAGE_TYPE_TYPING, MESSAGE_TYPE_UNTYPING, MESSAGE_TYPE_CUSTOMER_TYPING, MESSAGE_TYPE_CUSTOMER_UNTYPING, MESSAGE_TYPE_AGENT_UNTYPING, MESSAGE_TYPE_AGENT_TYPING, MESSAGE_TYPE_JOINED, MESSAGE_TYPE_LEFT:
+				break
+			default:
+				mesId, err := chatMessage.SaveToMySQL()
+				if err != nil {
+					continue
+				}
+				chatMessage.Id = mesId
+				globalRoomManager.SetLastMessageForRoom(chatMessage.RoomId, mesId)
+			}
+			globalRoomManager.Broadcast(chatMessage.RoomId, chatMessage)
+		}
+	}
+}
+
+// Sets client status to online when he was temporary offline
+func handleWebsocketsReRegister(ws *websocket.Conn, authId string) {
+	logger.Log(logger.VERBOSITY_NORMAL, "[HWRR] Re register websocket connections for ", authId)
+	for roomId, _ := range globalRoomManager.rooms {
+		member, ok := globalRoomManager.rooms[roomId][authId]
+		if ok && member.Status == CLIENT_STATUS_ALMOST_ONLINE {
+			logger.Log(logger.VERBOSITY_NORMAL, "[HWRR] Re register websocket connection for ", authId, " roomId: ", roomId)
+			member.RegisterWebSocketConnection(ws)
+			member.Status = CLIENT_STATUS_ONLINE
+			member.UpdateAndGetStatus()
+		}
+	}
+}
+
+// Sets client status to almost online if connection was closed
+func handleWebsocketsDisconnected(ws *websocket.Conn, authId string) {
+	logger.Log(logger.VERBOSITY_QUIET, "[HWD] [WS-DEFERRED] Unregistering WS connections from rooms")
+	for roomId, _ := range globalRoomManager.rooms {
+		member, ok := globalRoomManager.rooms[roomId][authId]
+		if ok && member.Status == CLIENT_STATUS_ONLINE {
+			logger.Log(logger.VERBOSITY_NORMAL, "[HWD] Unregister websocket connection for ", authId, " roomId: ", roomId)
+			member.Status = CLIENT_STATUS_ALMOST_ONLINE
+			member.UnregisterWebSocketConnection(ws)
+			member.UpdateAndGetStatus()
+		}
+	}
+	ws.Close()
+}
+
+                </code>
+            </pre>
+        </section>
+        </section>
+    </div>
+
+</div>
+
+<script src="../../lib/js/head.min.js"></script>
+<script src="../../js/reveal.min.js"></script>
+
+<script>
+
+    // Full list of configuration options available here:
+    // https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+            { src: '../../lib/js/classList.js', condition: function () {
+                return !document.body.classList;
+            } },
+            { src: '../../plugin/markdown/marked.js', condition: function () {
+                return !!document.querySelector('[data-markdown]');
+            } },
+            { src: '../../plugin/markdown/markdown.js', condition: function () {
+                return !!document.querySelector('[data-markdown]');
+            } },
+            { src: '../../plugin/highlight/highlight.js', async: true, callback: function () {
+                hljs.initHighlightingOnLoad();
+            } },
+            { src: '../../plugin/zoom-js/zoom.js', async: true, condition: function () {
+                return !!document.body.classList;
+            } },
+            { src: '../../plugin/notes/notes.js', async: true, condition: function () {
+                return !!document.body.classList;
+            } }
+        ]
+    });
+
+</script>
+
+</body>
+</html>
