@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+
+    <title>Sphinx</title>
+
+    <meta name="description" content="A framework for easily creating beautiful presentations using HTML">
+    <meta name="author" content="Hakim El Hattab">
+
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="../../css/reveal.min.css">
+    <link rel="stylesheet" href="../../css/theme/default.css" id="theme">
+
+    <!-- For syntax highlighting -->
+    <link rel="stylesheet" href="../../lib/css/zenburn.css">
+
+    <!-- If the query includes 'print-pdf', use the PDF print sheet -->
+    <script>
+        document.write('<link rel="stylesheet" href="../../css/print/' + ( window.location.search.match(/print-pdf/gi) ? 'pdf' : 'paper' ) + '.css" type="text/css" media="print">');
+    </script>
+
+    <!--[if lt IE 9]>
+    <script src="../../lib/js/html5shiv.js"></script>
+    <![endif]-->
+</head>
+
+<body>
+
+<div class="reveal">
+
+    <!-- Any section element inside of this container is displayed as a slide -->
+    <div class="slides">
+        <section>
+            Сервери повнотекстового пошуку, Sphinx
+            <img src="images/logo.png">
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <br>
+            <small>
+                Themes: <a href="?#/themes">Default</a> -
+                <a href="?theme=sky">Sky</a> -
+                <a href="?theme=beige">Beige</a> -
+                <a href="?theme=simple">Simple</a> -
+                <a href="?theme=serif">Serif</a> -
+                <a href="?theme=night">Night</a> <br>
+                <a href="?theme=moon.css">Moon</a> -
+                <a href="?theme=simple.css">Simple</a> -
+                <a href="?theme=solarized.css">Solarized</a>
+            </small>
+        </section>
+        <section>
+            <h2>About me:</h2>
+            <p>
+                Олег Рошнівський
+            </p>
+            <p>Nickname: Rosh</p>
+            <p>Internal Systems team</p>
+            <p>
+                <img src="images/sphinx1.jpg">
+            </p>
+            Email: <a href="mailto:rosh@zeoalliance.com">rosh@zeoalliance.com</a>
+
+        </section>
+        <section>
+             <p>
+                <style>
+                    #comparison_table  th {
+                        font-size: 20px;
+                    }
+                </style>
+            <table id="comparison_table">
+                <thead>
+                <tr><th></th><th> MySQL </th><th> PostgreSQL </th><th> Xapian </th><th> Sphinx </th><th> Solr </th><th> CLucene</th></tr>
+                </thead>
+                <tbody>
+                <tr><th>Швидкість індексування(МБ/с)</th><td>0.314</td><td>0.522</td><td>1.36</td><td>4.5</td><td>2.75</td><td>3.8</td></tr>
+                <tr><th>Швидкість (min sec) пошуку (max sec)</th><td>0.175<br>3.46</td><td>0.028<br>2.1</td><td>0.014<br>0.135</td><td>0.007<br>0.075</td><td>0.025<br>0.212</td><td>0.010<br>0.212</td></tr>
+                <tr><th>Розмір індексу(%)</th><td>15</td><td>150</td><td>200</td><td>30</td><td>20</td><td>20</td></tr>
+                <tr><th>Інтерфейси</th><td> SQL </td><td> SQL </td><td>API</td><td>API, SQL</td><td>Service</td><td>API</td></tr>
+                <tr><th>Стеммери</th><td> 0 </td><td> 15 </td><td> 15 </td><td> 15 </td><td> 31 </td><td> 15 + CJK</td></tr>
+                <tr><th>Стоп-слова, синоніми</th><td>-</td><td> + </td><td> + </td><td> + </td><td> + </td><td> +</td></tr>
+                <tr><th>Soundex</th><td> - </td><td> - </td><td> - </td><td> + </td><td> + </td><td> -</td></tr>
+                <tr><th>Підсвітка</th><td> - </td><td> + </td><td> - </td><td> + </td><td> + </td><td> +</td></tr>
+                </tbody></table>
+            </p>
+        </section>
+        <section>
+            <section>
+                <h2>About Sphinx:</h2>
+                <img src="images/DSC_0732.jpg">
+
+            </section>
+            <section>
+                <p>
+                <ul>
+                    <li>Безплатний</li>
+                    <li>Open-source</li>
+                    <li>Швидкий пошук та індексування</li>
+                    <li>Досить добре розширюється</li>
+                    <li>Найбільший Sphinx інстанс – boardreader.com, із 3,000,000,000 документів (Біля 4 TB тексту)</li>
+                    <li>Найбільш зайнятий Sphinx інстанс – craigslist.org , із 50,000,000 запитів/день (560/сек)</li>
+                </ul>
+                </p>
+            </section>
+        </section>
+        <section>
+            <section>
+            <h3>Можливості</h3>
+            <ul>
+                <li>Швидке індексування</li>
+                <li>Швидкий пошук</li>
+                <li>Розподілений пошук</li>
+                <li>Full-text query language (field limits, phrase queries, etc)</li>
+                <li>Ваги(weights) для полів</li>
+                <li>Не текстові пошукові конструкції (WHERE authorid=123)</li>
+                <li>Native APIs для багатьох мов – PHP, Perl, Python, Ruby, Java..</li>
+                <li>Різні ранкери релевантності</li>
+                <li>Встроїні російський, англійський і чешський стеммери та препроцесори Soundex и Metaphone (для порівняння англійських слів по звучанню). Стеммери для інших мов теж можна підключити, тільки треба скомпілювати Sphinx із флагом --with-libstemmer.</li>            </ul>
+        </section>
+            <section>
+                <li>Синоніми, причому є звичайні, а є «tokenizing exceptions», які можуть включати в себе спец символи.</li>
+                <li>Також є «blend_chars» — символи, які водночас є і розділювачими і входять в слова — наприклад, щоб «AT&T» перетворилась в слова «AT», «T» і «AT&T».</li>
+                <li>Уміє інфіксний пошук (для тих хто хотів швидко шукати по підстроці!),  індексувати по сполученнях і навіть по вмісту заздалегідь заданих HTML-тегів. Підсвітка слів в результатах.</li>
+                <li>Підтримка неповнотекстових full-scan запитів</li>
+                <li>SQL протокол, Sphinx може фільтрувати, сортувати, групувати результат пошуку (WHERE, ORDER, GROUP)</li>
+                <li>Sphinx може зберігати додаткові атрибути в документах – аналог SQL стовпців</li>
+                </ul>
+            </section>
+        </section>
+        <section>
+            <section>
+                <h3>Дозволяє вибрати ранкери релевантності на основі різних функцій:</h3>
+                <ul>
+                    <li>SPH_RANK_NONE</li>
+                    <li>SPH_RANK_WORDCOUNT</li>
+                    <li>SPH_RANK_FIELDMASK</li>
+                    <li>SPH_RANK_PROXIMITY</li>
+                    <li>SPH_RANK_MATCHANY</li>
+                    <li>SPH_RANK_PROXIMITY_BM25</li>
+                    <li>SPH_RANK_BM25</li>
+                    <li>SPH_RANK_SPH04</li>
+                </ul>
+                <p>
+                    <a href="http://sphinxsearch.com/blog/2010/08/17/how-sphinx-relevance-ranking-works/">About ranking</a>
+                </p>
+            </section>
+            <section>
+                <h3>Multi-queries із різними оптимізаціями</h3>
+                Дозволяють виконувати кілька наборів запитів у Sphinx які додатково оптимізовуються:
+                <ul>
+                    <li>Common query optimization (added in 0.9.8) - якщо відрізняються тільки режими сортування/групування, повнотекстовий запит виконується тільки раз</li>
+                    <li>Subtree caching
+                        – якщо запити мають схожі частини ці частини будуть закешовні</li>
+                </ul>
+            </section>
+            <section>
+                <h3>Підтримка SELECT</h3>
+                <ul>
+                    <li>Все що може бути зроблене через single table SELECT.</li>
+                    <li>Може вичислювати довільні арифметичні вирази (a*b+c*log(@weight+1.234)-5)</li>
+                    <li>Може робити WHERE, ORDER BY, GROUP BY, COUNT(*)/COUNT(DISTINCT), SUM()/AVG()</li>
+                    <li>LIMIT Запити які в результаті ліміту обрізають частину результату кешуються і наступного разу невиконуються.</li>
+                    <li>Дуже швидкий full scan:</li>
+                </ul>
+                <pre>
+2.5 млн записів/документів
+SELECT id FROM test1 ORDER BY touched DESC
+– MySQL: 1.87 sec
+– Sphinx: 0.87 sec
+SELECT field1, COUNT(*) AS q FROM test1 GROUP
+BY field1 ORDER BY q DESC
+– MySQL: 1.10 sec
+– Sphinx: 0.33 sec
+                </pre>
+            </section>
+        </section>
+        <section>
+            <h3>Недоліки:</h3>
+            <ul>
+                <li>Спочатку обновлюваних (realtime) індексів в Sphinx небуло, єдине що він умів — побудувати монолітний індекс і потім по ньому шукати.</li>
+                <li>Не вміє нормально оновлювати/видаляти документи в індексі, нормально тільки додає.</li>
+                <li>Realtime індекси підтримують не все — наприклад, не підтримують префікси/інфікси і MVA.</li>
+                <li>Невеликий бардак із інтерфейсами та фічами: оновлення реалтайм індексу тільки через SphinxQL; синтаксис пошуку в усіх трьох інтерфейсах різний (звичайний, SphinxQL, SphinxSE); 5 різних режимів пошуку функціонал яких схожий (4 obsolete)</li>
+                <li>indexer невміє перебудовувати реалтайм індекси</li>
+                <li>TRUNCATE індексу через SphinxQL зробити неможна.</li>
+            </ul>
+        </section>
+        <section>
+            <img src="images/thaks.gif">
+        </section>
+
+    </div>
+
+</div>
+
+<script src="../../lib/js/head.min.js"></script>
+<script src="../../js/reveal.min.js"></script>
+
+<script>
+
+    // Full list of configuration options available here:
+    // https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+        controls: true,
+        progress: true,
+        history: true,
+        center: true,
+
+        theme: Reveal.getQueryHash().theme, // available themes are in /css/theme
+        transition: Reveal.getQueryHash().transition || 'default', // default/cube/page/concave/zoom/linear/fade/none
+
+        // Optional libraries used to extend on reveal.js
+        dependencies: [
+            { src: '../../lib/js/classList.js', condition: function () {
+                return !document.body.classList;
+            } },
+            { src: '../../plugin/markdown/marked.js', condition: function () {
+                return !!document.querySelector('[data-markdown]');
+            } },
+            { src: '../../plugin/markdown/markdown.js', condition: function () {
+                return !!document.querySelector('[data-markdown]');
+            } },
+            { src: '../../plugin/highlight/highlight.js', async: true, callback: function () {
+                hljs.initHighlightingOnLoad();
+            } },
+            { src: '../../plugin/zoom-js/zoom.js', async: true, condition: function () {
+                return !!document.body.classList;
+            } },
+            { src: '../../plugin/notes/notes.js', async: true, condition: function () {
+                return !!document.body.classList;
+            } }
+        ]
+    });
+
+</script>
+
+</body>
+</html>
